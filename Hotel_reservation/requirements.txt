@@ -1,6 +1,0 @@
-boto3
-ipykernel
-yaml
-pandas
-sklearn
-imbalanced-learn

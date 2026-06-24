@@ -20,3 +20,30 @@ aws iam add-role-to-instance-profile --instance-profile-name ec2-mlops-profile -
 
 
 ## Block - 2 Commands
+
+- Step 1 — Find the Ubuntu 22.04 AMI for ap-south-1:
+aws ec2 describe-images --owners 099720109477 --filters "Name=name,Values=ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*" --query "Images | sort_by(@, &CreationDate) | [-1].ImageId" --region us-west-2 --output text
+
+- output : ami-0370d56c6f7906c70
+
+- Step 2 — Create Security Group:
+aws ec2 create-security-group --group-name mlops-mlflow-sg --description "Security group for MLflow server" --region us-west-2
+
+- Step 3 — Get your public IP:
+curl https://checkip.amazonaws.com
+
+
+- Step 4a — Add SSH rule:
+aws ec2 authorize-security-group-ingress --group-id sg-0a931b0771876e8bc --protocol tcp --port 22 --cidr <your-ip>/32 --region us-west-2
+
+- Step 4b — Add MLflow port rule:
+aws ec2 authorize-security-group-ingress --group-id sg-0a931b0771876e8bc --protocol tcp --port 5000 --cidr <your-ip>/32 --region us-west-2
+
+- Step 5 — Create key pair:
+aws ec2 create-key-pair --key-name mlops-key --query "KeyMaterial" --output text --region us-west-2 > mlops-key.pem
+
+- Step 6 — Launch the instance:
+aws ec2 run-instances --image-id ami-0370d56c6f7906c70 --instance-type t3.medium --key-name mlops-key --security-group-ids sg-0a931b0771876e8bc --iam-instance-profile Name=ec2-mlops-profile --region us-west-2 --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=mlops-mlflow-server}]" --count 1
+
+- Step 7 — Get public IP:
+aws ec2 describe-instances --filters "Name=tag:Name,Values=mlops-mlflow-server" --query "Reservations[0].Instances[0].PublicIpAddress" --region us-west-2 --output text

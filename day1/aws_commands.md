@@ -47,3 +47,36 @@ aws ec2 run-instances --image-id ami-0370d56c6f7906c70 --instance-type t3.medium
 
 - Step 7 — Get public IP:
 aws ec2 describe-instances --filters "Name=tag:Name,Values=mlops-mlflow-server" --query "Reservations[0].Instances[0].PublicIpAddress" --region us-west-2 --output text
+
+## Block - 3 Commands
+
+- `python prepare_data.py`
+- `python train.py`
+
+- `aws s3 ls s3://mlops-sachin-artifacts/data/`
+
+- `aws ec2 stop-instances --instance-ids <your-instance-id> --region us-west-2`
+- `aws ec2 start-instances --instance-ids <your-instance-id> --region us-west-2`
+
+- `aws ec2 describe-instances --instance-ids <your-instance-id> --query "Reservations[0].Instances[0].State.Name" --region us-west-2 --output text`
+
+- `aws s3 ls s3://mlops-sachin-artifacts/mlruns/ --recursive`
+
+
+## Block - 4 Commands
+
+- `python registry.py`
+
+## Infra setup commands
+
+- First time — creates everything
+    `python infra.py --action setup`
+
+- Coming back after a break — starts instance, updates SG with your new IP
+    `python infra.py --action start`
+
+- Taking a break — stops instance
+    `python infra.py --action stop`
+
+- Done with everything — deletes all resources
+    `python infra.py --action teardown`

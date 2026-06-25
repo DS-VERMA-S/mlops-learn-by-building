@@ -30,9 +30,20 @@
 icacls "C:\xxxx\xxxx\mlops-key.pem" /inheritance:r
 icacls "C:\xxxx\xxxx\mlops-key.pem" /grant:r "$($env:USERNAME):(R)"
 
-ssh -i "C:\xxxx\xxxx\mlops-key.pem" ubuntu@34.221.xx.xx
+ssh -i "C:\Personal\aws_credentials\mlops-key.pem" ubuntu@44.243.167.84
+ssh -i "C:\xxxx\xxxx\mlops-key.pem" ubuntu@35.86.xxx.xxx
 
+ mlflow server \
+  --backend-store-uri sqlite:///mlflow.db \
+  --default-artifact-root s3://mlops-sachin-artifacts/mlruns \
+  --host 0.0.0.0 \
+  --port 5000 \
+  --gunicorn-opts "--workers 1"
 
+http://44.247.73.2:5000
+ 
+
+ aws ec2 terminate-instances --instance-ids 44.243.167.84 --region us-west-2
 
 
 

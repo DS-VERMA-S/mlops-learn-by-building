@@ -1,82 +1,69 @@
-### 1. Block - 1 commands
+# AWS Commands — Day 1 (Summary)
 
-aws s3api create-bucket  --bucket mlops-sachin-artifacts  --region us-west-2 --create-bucket-configuration LocationConstraint=us-west-2
+Purpose
 
-aws iam create-policy --policy-name mlops-learner-iam-policy --policy-document day1/mlops-learner-iam-policy.json --profile admin
+- Record the key AWS CLI commands run during Day 1 (IAM, S3, instance profile) and how to verify them.
 
-aws iam create-role --role-name ec2-mlops-role  --assume-role-policy-document file://C:/Users/sachi/Projects/PythonProjects/Learn_MLOps_Application/day1/trust-policy.json
+Commands Executed
 
+```bash
+# 1. Create S3 bucket
+aws s3api create-bucket \
+  --bucket mlops-sachin-artifacts \
+  --region us-west-2 \
+  --create-bucket-configuration LocationConstraint=us-west-2
+
+# 2. Create a custom IAM policy (JSON file in day1/)
+aws iam create-policy \
+  --policy-name mlops-learner-iam-policy \
+  --policy-document day1/mlops-learner-iam-policy.json \
+  --profile admin
+
+# 3. Create IAM role with EC2 trust
+aws iam create-role \
+  --role-name ec2-mlops-role \
+  --assume-role-policy-document file://day1/trust-policy.json
+
+# 4. Attach managed policies to the role
 aws iam attach-role-policy --role-name ec2-mlops-role --policy-arn arn:aws:iam::aws:policy/AmazonS3FullAccess
-
 aws iam attach-role-policy --role-name ec2-mlops-role --policy-arn arn:aws:iam::aws:policy/AmazonEC2FullAccess
-
 aws iam attach-role-policy --role-name ec2-mlops-role --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess
+aws iam attach-role-policy --role-name ec2-mlops-role --policy-arn arn:aws:iam::aws:policy/CloudWatchFullAccess
 
-aws iam attach-role-policy --role-name ec2-mlops-role  --policy-arn arn:aws:iam::aws:policy/CloudWatchFullAccess
-
+# 5. Create instance profile and add role
 aws iam create-instance-profile --instance-profile-name ec2-mlops-profile
-
 aws iam add-role-to-instance-profile --instance-profile-name ec2-mlops-profile --role-name ec2-mlops-role
+```
 
+Verification
 
-## Block - 2 Commands
+```bash
+# Check S3 bucket exists and is listable
+aws s3 ls s3://mlops-sachin-artifacts
 
-- Step 1 — Find the Ubuntu 22.04 AMI for ap-south-1:
-aws ec2 describe-images --owners 099720109477 --filters "Name=name,Values=ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*" --query "Images | sort_by(@, &CreationDate) | [-1].ImageId" --region us-west-2 --output text
+# Check role exists
+aws iam get-role --role-name ec2-mlops-role
 
-- output : ami-0370d56c6f7906c70
+# List attached policies
+aws iam list-attached-role-policies --role-name ec2-mlops-role
 
-- Step 2 — Create Security Group:
-aws ec2 create-security-group --group-name mlops-mlflow-sg --description "Security group for MLflow server" --region us-west-2
+# Check instance profile
+aws iam get-instance-profile --instance-profile-name ec2-mlops-profile
+```
 
-- Step 3 — Get your public IP:
-curl https://checkip.amazonaws.com
+Notes & Tips
 
+- Use least privilege: replace managed policies with a tailored JSON policy when possible.
+- The trust policy file is `day1/trust-policy.json` and should specify `ec2.amazonaws.com` as the principal.
+- To attach the instance profile to an EC2 instance, do so at launch or via the EC2 console/`associate-iam-instance-profile`.
+- Avoid committing credentials to the repo; use IAM roles for EC2 instead.
 
-- Step 4a — Add SSH rule:
-aws ec2 authorize-security-group-ingress --group-id sg-0a931b0771876e8bc --protocol tcp --port 22 --cidr <your-ip>/32 --region us-west-2
+Troubleshooting
 
-- Step 4b — Add MLflow port rule:
-aws ec2 authorize-security-group-ingress --group-id sg-0a931b0771876e8bc --protocol tcp --port 5000 --cidr <your-ip>/32 --region us-west-2
+- If `aws s3 ls` fails on an EC2 instance, confirm the instance has an attached instance profile and the role has S3 permissions.
+- If `add-role-to-instance-profile` fails with a "Limit exceeded" error, check for existing roles attached or delete unused instance profiles.
 
-- Step 5 — Create key pair:
-aws ec2 create-key-pair --key-name mlops-key --query "KeyMaterial" --output text --region us-west-2 > mlops-key.pem
+References
 
-- Step 6 — Launch the instance:
-aws ec2 run-instances --image-id ami-0370d56c6f7906c70 --instance-type t3.medium --key-name mlops-key --security-group-ids sg-0a931b0771876e8bc --iam-instance-profile Name=ec2-mlops-profile --region us-west-2 --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=mlops-mlflow-server}]" --count 1
-
-- Step 7 — Get public IP:
-aws ec2 describe-instances --filters "Name=tag:Name,Values=mlops-mlflow-server" --query "Reservations[0].Instances[0].PublicIpAddress" --region us-west-2 --output text
-
-## Block - 3 Commands
-
-- `python prepare_data.py`
-- `python train.py`
-
-- `aws s3 ls s3://mlops-sachin-artifacts/data/`
-
-- `aws ec2 stop-instances --instance-ids <your-instance-id> --region us-west-2`
-- `aws ec2 start-instances --instance-ids <your-instance-id> --region us-west-2`
-
-- `aws ec2 describe-instances --instance-ids <your-instance-id> --query "Reservations[0].Instances[0].State.Name" --region us-west-2 --output text`
-
-- `aws s3 ls s3://mlops-sachin-artifacts/mlruns/ --recursive`
-
-
-## Block - 4 Commands
-
-- `python registry.py`
-
-## Infra setup commands
-
-- First time — creates everything
-    `python infra.py --action setup`
-
-- Coming back after a break — starts instance, updates SG with your new IP
-    `python infra.py --action start`
-
-- Taking a break — stops instance
-    `python infra.py --action stop`
-
-- Done with everything — deletes all resources
-    `python infra.py --action teardown`
+- AWS CLI: https://docs.aws.amazon.com/cli/latest/reference/
+- IAM Roles for EC2: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html

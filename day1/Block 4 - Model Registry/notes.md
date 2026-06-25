@@ -1,14 +1,28 @@
-# Block 4 — Model Registry + Promotion (1 hr)
+# Block 4 — Model Registry + Promotion
 
-**Concept:** MLflow Model Registry has stages => None → Staging → Production. In a real pipeline, you promote a model only after it passes evaluation. You must understand this transition.
+## Summary
 
+This block demonstrates registering models in MLflow's Model Registry and promoting them through stages (None → Staging → Production). The registry provides a canonical, versioned place to track deployable models.
 
-**Question**
+## Quick Checklist
 
-- What is the difference between a run and a registered model in MLflow?
-    - A run is a recorded experiment execution — it captures params, metrics, and artifacts for one training attempt. It lives on your MLflow server already. A registered model is a named, versioned entity that points to a specific run's artifacts and has a lifecycle (Staging/Production). The key difference: runs are ephemeral experiment records, registered models are deployable versioned artifacts with promotion workflows.
+- [x] Register a trained model from a run
+- [x] Create/stage versions and promote to `Staging` and `Production`
+- [x] Observe how promotion affects serving
 
-- Right now your serving layer will load the model using models:/IrisClassifier/Production. What happens if you register version 2 and promote it to Production — does the serving layer automatically pick it up or not?
-    - Your serving layer loads models:/IrisClassifier/Production at startup. Whatever model is tagged Production at that moment gets loaded. If you promote version 2 to Production later, the serving layer will NOT switch — it already loaded version 1 at startup and holds it in memory. To pick up version 2 you need to restart the serving container. That's a critical production consideration — model updates require a deployment step, not just a registry promotion.
+## Key Concepts (plain English)
 
-python '.\day1\Block 4 - Model Registry\registry.py'
+- Run vs Registered Model: A run is an experiment record (params, metrics, artifacts). A registered model is a named, versioned pointer to a run's artifacts with a lifecycle and metadata.
+- Promotion does not automatically change running services: most serving processes load a model at startup. Promoting to Production changes the registry state; your service must reload or be redeployed to pick up the new version.
+
+## Example
+
+```bash
+python day1/Block\ 4\ -\ Model\ Registry/registry.py
+```
+
+## Verification
+
+- Check the MLflow UI under "Models" for versions and stages.
+- Confirm serving behavior by promoting a new version and restarting the serving process to load it.
+

@@ -1,49 +1,48 @@
-# Notes for Block 02
+# Block 2 — EC2 + MLflow Setup
 
-**Why EC2 and not SageMaker**: SageMaker hides too much. You need to know what a tracking server actually is before you use a managed one.
+## Summary
 
-**What you will do:**
+This block launches an EC2 instance, installs MLflow, and configures it to use S3 for artifact storage. We prefer EC2 here so you see the full server setup and how MLflow connects to S3.
 
- - Launch an EC2 instance — t3.medium, Ubuntu 22.04, 20GB storage
-- Security group: open port 22 (SSH), port 5000 (MLflow UI) — restrict to your IP only
-- Attach the ec2-mlops-role you created above
-- SSH in, install: python3, pip, mlflow, boto3, scikit-learn, xgboost
-- Start MLflow with S3 as artifact store:
+## Quick Checklist
 
-## Checklist
+- [x] Launch EC2 (t3.medium, Ubuntu 22.04)
+- [x] Security group: open SSH (22) and MLflow UI (5000) to your IP
+- [x] Attach `ec2-mlops-role` to the instance
+- [x] Install runtime and dependencies (python3, pip, mlflow, boto3, scikit-learn, xgboost)
+- [x] Start MLflow server with S3 artifact store
+- [x] Confirm MLflow UI reachable
 
-- [x] Launch EC2 instance (t3.medium, Ubuntu 22.04)
-- [x] Configure Security Group (SSH port 22, MLflow port 5000)
-- [x] Attach ec2-mlops-role to the instance
-- [x] SSH into instance
-- [x] Install dependencies (python3, pip, mlflow, boto3, scikit-learn, xgboost)
-- [x] Start MLflow server with S3 as artifact store
-- [x] Verify MLflow UI opens in browser
+## Commands & Notes
 
+SSH (example):
+```bash
+ssh -i "C:/Personal/aws_credentials/mlops-key.pem" ubuntu@<ec2-public-ip>
+```
 
-## Learning Notes
+Fix Windows file permissions for .pem if needed:
+```powershell
+icacls "C:\path\to\mlops-key.pem" /inheritance:r
+icacls "C:\path\to\mlops-key.pem" /grant:r "$($env:USERNAME):(R)"
+```
 
-
-- .pem file is open for all users to read, lets fix it.
-
-- commands for reading and entering in EC2 instance
-icacls "C:\xxxx\xxxx\mlops-key.pem" /inheritance:r
-icacls "C:\xxxx\xxxx\mlops-key.pem" /grant:r "$($env:USERNAME):(R)"
-
-ssh -i "C:\Personal\aws_credentials\mlops-key.pem" ubuntu@44.243.167.84
-ssh -i "C:\xxxx\xxxx\mlops-key.pem" ubuntu@35.86.xxx.xxx
-
- mlflow server \
+Start MLflow on the instance:
+```bash
+mlflow server \
   --backend-store-uri sqlite:///mlflow.db \
   --default-artifact-root s3://mlops-sachin-artifacts/mlruns \
   --host 0.0.0.0 \
   --port 5000 \
   --gunicorn-opts "--workers 1"
+```
 
-http://44.247.73.2:5000
- 
+Verify: open `http://<ec2-public-ip>:5000` in your browser (use your security group's IP restriction).
 
- aws ec2 terminate-instances --instance-ids 44.243.167.84 --region us-west-2
+## Troubleshooting
+
+- If MLflow UI is not reachable: check security group, firewall, and that MLflow is running.
+- If MLflow can't write to S3: confirm the instance has the `ec2-mlops-profile` and the role includes S3 permissions.
+
 
 
 

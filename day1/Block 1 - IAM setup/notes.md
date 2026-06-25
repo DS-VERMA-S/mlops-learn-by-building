@@ -1,130 +1,70 @@
 # Block 1 — IAM + AWS Setup
 
-## Checklist
-- [x] Created IAM user `mlops-learner` with programmatic access
-- [x] Downloaded and stored access key CSV safely (not in repo)
-- [x] Attached policies: S3FullAccess, EC2FullAccess, ECRFullAccess, CloudWatchFullAccess
-- [x] Configured AWS CLI locally (`aws configure`)
-- [x] Verified CLI works: `aws s3 ls` returns without error
-- [x] Created S3 bucket `mlops-<yourname>-artifacts` with public access blocked
-- [x] Created IAM Role `ec2-mlops-role` with same 4 policies
-- [x] Verified role has EC2 as trusted entity (not a user, not Lambda — EC2)
+## Summary
 
-## Screenshots
-- [x] IAM user created (console screenshot)
-- [x] Policies attached to user
-- [x] S3 bucket created
-- [x] IAM Role trust relationship showing EC2
+This block sets up the IAM and basic AWS infrastructure used by later MLOps blocks. Key outcomes:
+- An S3 bucket for artifacts
+- A role (`ec2-mlops-role`) that EC2 instances can assume
+- An instance profile (`ec2-mlops-profile`) that bundles the role for EC2
 
-## Key Concepts — Answer These Before Moving On
-1. What is the difference between an IAM User and an IAM Role?
-2. Why does the EC2 role have EC2 as the trusted entity?
-3. Where are your AWS credentials stored locally after `aws configure`?
-4. What happens if you put your access keys in a Python file and push to GitHub?
+Purpose: allow EC2 instances to interact with AWS services (S3, ECR, CloudWatch) without embedding credentials on the host.
 
-## Notes
+## Quick Checklist
 
-### 1. What Were We Doing?
+- [x] S3 bucket created: `mlops-sachin-artifacts`
+- [x] IAM policy created: `mlops-learner-iam-policy`
+- [x] IAM role created: `ec2-mlops-role`
+- [x] Instance profile created: `ec2-mlops-profile`
+- [x] Policies attached: S3, EC2, ECR, CloudWatch
 
-In Day 1, Block 1, we set up the **foundational security and infrastructure** for our MLOps project on AWS. Instead of using root AWS account credentials (which is dangerous), we created a proper **IAM role** that EC2 machines can use. This follows the principle of least privilege—each service only gets the permissions it actually needs.
+## High-level Notes (plain English)
 
-Think of it like this:
-- **IAM Role** = A job title or badge for an EC2 machine
-- **Instance Profile** = The holder that carries the badge
-- **Policies** = The specific permissions written on the badge (S3 access, EC2 access, etc.)
+- We avoid using long-lived access keys on servers. Instead, EC2 instances get a role (temporary credentials provided by AWS).
+- The role is attached to an instance profile; the EC2 instance uses that profile to obtain short-lived credentials from the metadata service.
+- S3 is our artifact store for models, datasets, and MLflow artifacts.
 
-When we launch an EC2 instance and attach this badge to it, the instance automatically knows how to talk to AWS services like S3 (for storing models/data), ECR (for Docker images), and CloudWatch (for monitoring)—without us having to hardcode any credentials on the machine.
+## Commands (what we ran)
 
-We also created an S3 bucket as a central storage hub for all our MLOps artifacts (datasets, trained models, logs, configs).
-
-### 2. Commands Executed
-
-#### 1.1 S3 Bucket Creation
 ```bash
+# 1. Create S3 bucket
 aws s3api create-bucket \
   --bucket mlops-sachin-artifacts \
   --region us-west-2 \
   --create-bucket-configuration LocationConstraint=us-west-2
-```
-**Purpose:** Created a private S3 bucket to store MLOps artifacts (models, datasets, logs)
 
-#### 1.2 IAM Policy Creation
-```bash
+# 2. Create a custom IAM policy (JSON file in day1/)
 aws iam create-policy \
   --policy-name mlops-learner-iam-policy \
   --policy-document day1/mlops-learner-iam-policy.json \
   --profile admin
-```
-**Purpose:** Created a custom IAM policy with specific permissions for MLOps work
 
-#### 1.3 IAM Role Creation (for EC2)
-```bash
+# 3. Create role and trust policy for EC2
 aws iam create-role \
   --role-name ec2-mlops-role \
-  --assume-role-policy-document file://C:/Users/sachi/Projects/PythonProjects/Learn_MLOps_Application/day1/trust-policy.json
-```
-**Purpose:** Created an IAM role that EC2 instances can assume. Trust policy allows EC2 service to use this role.
+  --assume-role-policy-document file://day1/trust-policy.json
 
-#### 1.4 Attached Policies to Role
-```bash
-# S3 Full Access
-aws iam attach-role-policy \
-  --role-name ec2-mlops-role \
-  --policy-arn arn:aws:iam::aws:policy/AmazonS3FullAccess
+# 4. Attach managed policies
+aws iam attach-role-policy --role-name ec2-mlops-role --policy-arn arn:aws:iam::aws:policy/AmazonS3FullAccess
+aws iam attach-role-policy --role-name ec2-mlops-role --policy-arn arn:aws:iam::aws:policy/AmazonEC2FullAccess
+aws iam attach-role-policy --role-name ec2-mlops-role --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess
+aws iam attach-role-policy --role-name ec2-mlops-role --policy-arn arn:aws:iam::aws:policy/CloudWatchFullAccess
 
-# EC2 Full Access
-aws iam attach-role-policy \
-  --role-name ec2-mlops-role \
-  --policy-arn arn:aws:iam::aws:policy/AmazonEC2FullAccess
-
-# ECR Full Access (for Docker image management)
-aws iam attach-role-policy \
-  --role-name ec2-mlops-role \
-  --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess
-
-# CloudWatch Full Access (for monitoring & logs)
-aws iam attach-role-policy \
-  --role-name ec2-mlops-role \
-  --policy-arn arn:aws:iam::aws:policy/CloudWatchFullAccess
-```
-**Purpose:** Granted necessary AWS service permissions to the EC2 role
-
-#### 1.5 Created Instance Profile
-```bash
+# 5. Create instance profile and add role
 aws iam create-instance-profile --instance-profile-name ec2-mlops-profile
-```
-**Purpose:** Created a container that holds the IAM role. This is what gets attached to EC2 instances.
-
-#### 1.6 Added Role to Instance Profile
-```bash
-aws iam add-role-to-instance-profile \
-  --instance-profile-name ec2-mlops-profile \
-  --role-name ec2-mlops-role
-```
-**Purpose:** Linked the role to the instance profile. Now any EC2 instance using this profile will have these permissions.
-
-### 2. Architecture Summary
-```
-EC2 Instance
-    ↓
-Instance Profile (ec2-mlops-profile)
-    ↓
-IAM Role (ec2-mlops-role)
-    ↓
-Policies Attached:
-  • AmazonS3FullAccess
-  • AmazonEC2FullAccess
-  • AmazonEC2ContainerRegistryFullAccess
-  • CloudWatchFullAccess
+aws iam add-role-to-instance-profile --instance-profile-name ec2-mlops-profile --role-name ec2-mlops-role
 ```
 
-When you launch an EC2 instance with this instance profile, the instance will automatically have access to these AWS services without needing to store credentials on the instance.
+## How to Verify
 
-### 3. Configure AWS CLI
-- `aws configure` for setting up the CLI in local windows
-```
-AWS Access Key ID:      ← from the CSV you downloaded
-AWS Secret Access Key:  ← from the CSV you downloaded
-Default region name:    ← use us-west-2 (Always choose the closest)
-Default output format:  ← json
-```
+- From a machine with the instance profile attached: `aws s3 ls` should work without manual credentials.
+- In the EC2 console, check the instance's IAM role and the attached instance profile.
+
+## Common Troubleshooting
+
+- If `aws s3 ls` fails on the instance: confirm the instance has the instance profile attached and the role has S3 permissions.
+- If the role isn't visible in EC2: ensure the instance profile was created and the role was added to it.
+
+## Next Steps
+
+- Launch EC2 (Block 2) and attach `ec2-mlops-profile`.
+- Start MLflow server and configure S3 as artifact store.

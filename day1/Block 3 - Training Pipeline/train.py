@@ -1,4 +1,6 @@
 import io
+import os
+import sys
 import boto3
 import pandas as pd
 import mlflow
@@ -8,8 +10,11 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, f1_score
 
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+from feature_pipeline import compute_reference_stats, save_reference_stats
+
 # ── Config ──────────────────────────────────────────────
-TRACKING_URI = "http://44.247.73.2:5000"
+TRACKING_URI = "http://35.165.175.72:5000"
 EXPERIMENT_NAME = "iris-classifier-v1"
 BUCKET = "mlops-sachin-artifacts"
 DATA_KEY = "data/iris.csv"
@@ -26,6 +31,10 @@ y = df["target"]
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
 )
+
+# Save reference stats to S3 after splitting
+stats = compute_reference_stats(X_train)
+save_reference_stats(stats)
 
 # ── MLflow Setup ─────────────────────────────────────────
 mlflow.set_tracking_uri(TRACKING_URI)

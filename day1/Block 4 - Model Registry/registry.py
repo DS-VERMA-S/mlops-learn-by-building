@@ -1,9 +1,9 @@
 import mlflow
 from mlflow.tracking import MlflowClient
 
-TRACKING_URI = "http://44.247.73.2:5000/"
+TRACKING_URI = "http://35.165.175.72:5000/"
 MODEL_NAME = "IrisClassifier"
-RUN_ID = "2d087958dd1d4d6a8c408dd8250faa24"
+RUN_ID = "9ad4b29b449842a4937657b1746968a3"
 
 mlflow.set_tracking_uri(TRACKING_URI)
 client = MlflowClient()

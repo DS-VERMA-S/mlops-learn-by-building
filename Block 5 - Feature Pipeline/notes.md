@@ -1,11 +1,11 @@
 # Block 5 - Feature Pipeline
 
-- [ ] Understand the feature pipeline's role
-- [ ] Write preprocessing logic as a reusable function
-- [ ] Save reference statistics (mean, std) to S3 during training
-- [ ] Write batch feature pipeline that reads raw data from S3 and writes features back to S3
-- [ ] Verify output features in S3
-
+- [x] Understand the feature pipeline's role
+- [x] Write preprocessing logic as a reusable function
+- [x] Save reference statistics (mean, std) to S3 during training
+- [x] Write batch feature pipeline that reads raw data from S3 and writes features back to S3
+- [x] Verify output features in S3
+- [x] Code is kept in src folder and can be imported in training and inference pipelines
 
 ## Work Items: 
 - Writing a reusable preprocessing logic

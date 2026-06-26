@@ -53,7 +53,7 @@ def apply_reference_stats(df:pd.DataFrame, stats:dict) -> pd.DataFrame:
     Apply reference stats to normalize features.
     Called during inference to normalize features.
     """
-
+    df = df.copy()
     for col in df.columns:
         if col in stats:
             mean = stats[col]['mean']

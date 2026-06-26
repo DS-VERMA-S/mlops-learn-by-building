@@ -41,3 +41,15 @@ python day1/Block\ 3\ -\ Training\ Pipeline/train.py
 
 - If training can't reach MLflow: confirm `MLFLOW_TRACKING_URI` and network/security group rules.
 - If artifacts don't appear in S3: verify role permissions and `--default-artifact-root` used by MLflow.
+
+## Issues Faced
+
+- The training script could not connect to MLflow because `MLFLOW_TRACKING_URI` was incorrect.
+- Artifacts were not uploaded when MLflow's artifact root was misconfigured.
+- The training run failed due to missing dependencies or an inactive virtual environment.
+
+## Key Learnings
+
+- Training scripts should log parameters, metrics, and artifacts to a remote MLflow tracking server.
+- S3 can serve as a centralized artifact storage even for locally run training.
+- Reproducibility is stronger when experiment runs are versioned and environment setup is consistent.

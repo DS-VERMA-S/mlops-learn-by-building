@@ -26,3 +26,15 @@ python day1/Block\ 4\ -\ Model\ Registry/registry.py
 - Check the MLflow UI under "Models" for versions and stages.
 - Confirm serving behavior by promoting a new version and restarting the serving process to load it.
 
+## Issues Faced
+
+- Registered models did not appear because the model was not created or registered correctly.
+- Promotion to a new stage did not impact running services until the serving process reloaded the model.
+- Stage transitions could be blocked by insufficient registry permissions or incorrect access settings.
+
+## Key Learnings
+
+- The Model Registry provides a versioned lifecycle for models separate from experiment runs.
+- Promoting a model is a metadata change; serving applications must refresh or redeploy to use it.
+- Use both the MLflow UI and registry APIs to manage model versions and stages safely.
+

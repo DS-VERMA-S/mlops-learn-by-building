@@ -68,3 +68,15 @@ aws iam add-role-to-instance-profile --instance-profile-name ec2-mlops-profile -
 
 - Launch EC2 (Block 2) and attach `ec2-mlops-profile`.
 - Start MLflow server and configure S3 as artifact store.
+
+## Issues Faced
+
+- EC2 could not access S3 because the instance profile was not attached.
+- IAM policy permissions were missing for one or more AWS services.
+- S3 bucket creation failed when the bucket region did not match the command parameters.
+
+## Key Learnings
+
+- EC2 instances should use IAM roles instead of embedded credentials.
+- An instance profile is required for EC2 to assume the IAM role.
+- Verify IAM permissions with simple AWS CLI calls from the instance.

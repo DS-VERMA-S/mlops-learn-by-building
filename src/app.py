@@ -9,11 +9,11 @@ from typing import List
 
 # Add src to path for feature_pipeline import
 
-from src.feature_pipeline import load_reference_stats, apply_reference_stats as preprocess
+from .feature_pipeline import load_reference_stats, apply_reference_stats as preprocess
 import pandas as pd
 
 # ── Config ──────────────────────────────────────────────
-TRACKING_URI = "http://16.146.56.79:5000"
+TRACKING_URI = "http://localhost:5000"
 MODEL_NAME = "IrisClassifier"
 MODEL_STAGE = "Production"
 FEATURE_NAMES = [

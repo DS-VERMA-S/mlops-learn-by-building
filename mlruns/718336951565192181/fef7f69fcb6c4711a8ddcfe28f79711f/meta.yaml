@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/718336951565192181/fef7f69fcb6c4711a8ddcfe28f79711f/artifacts
+end_time: 1782537041175
+entry_point_name: ''
+experiment_id: '718336951565192181'
+lifecycle_stage: active
+run_id: fef7f69fcb6c4711a8ddcfe28f79711f
+run_name: inquisitive-crab-765
+run_uuid: fef7f69fcb6c4711a8ddcfe28f79711f
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1782537041110
+status: 4
+tags: []
+user_id: sachi
